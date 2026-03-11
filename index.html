@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salary Benchmarker — Singapore 2025</title>
+  <meta name="description" content="See where your compensation stands against the Singapore market." />
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef } = React;
+
+const SALARY_DATA = {
+  "Finance & Accounting": {
+    "Junior / Entry Level": [36000, 42000, 52000],
+    "Executive": [42000, 54000, 66000],
+    "Senior Executive": [54000, 72000, 90000],
+    "Manager": [78000, 96000, 120000],
+    "Senior Manager": [108000, 132000, 168000],
+    "Director & Above": [156000, 204000, 276000],
+  },
+  "Marketing & Communications": {
+    "Junior / Entry Level": [33000, 39000, 48000],
+    "Executive": [40000, 51000, 63000],
+    "Senior Executive": [51000, 66000, 84000],
+    "Manager": [72000, 90000, 114000],
+    "Senior Manager": [102000, 126000, 156000],
+    "Director & Above": [144000, 192000, 264000],
+  },
+  "IT & Technology": {
+    "Junior / Entry Level": [42000, 51000, 63000],
+    "Executive": [54000, 66000, 84000],
+    "Senior Executive": [72000, 90000, 114000],
+    "Manager": [96000, 120000, 156000],
+    "Senior Manager": [132000, 162000, 204000],
+    "Director & Above": [180000, 228000, 312000],
+  },
+  "Operations & Logistics": {
+    "Junior / Entry Level": [30000, 36000, 45000],
+    "Executive": [38000, 48000, 60000],
+    "Senior Executive": [48000, 63000, 78000],
+    "Manager": [72000, 90000, 108000],
+    "Senior Manager": [96000, 120000, 150000],
+    "Director & Above": [138000, 180000, 240000],
+  },
+  "Human Resources": {
+    "Junior / Entry Level": [33000, 39000, 48000],
+    "Executive": [40000, 51000, 63000],
+    "Senior Executive": [51000, 66000, 84000],
+    "Manager": [72000, 90000, 114000],
+    "Senior Manager": [102000, 126000, 156000],
+    "Director & Above": [144000, 192000, 264000],
+  },
+  "Sales & Business Development": {
+    "Junior / Entry Level": [36000, 42000, 54000],
+    "Executive": [45000, 57000, 72000],
+    "Senior Executive": [60000, 78000, 96000],
+    "Manager": [84000, 108000, 138000],
+    "Senior Manager": [114000, 144000, 180000],
+    "Director & Above": [162000, 216000, 288000],
+  },
+  "Engineering": {
+    "Junior / Entry Level": [39000, 48000, 60000],
+    "Executive": [51000, 63000, 78000],
+    "Senior Executive": [66000, 84000, 108000],
+    "Manager": [90000, 114000, 144000],
+    "Senior Manager": [126000, 156000, 198000],
+    "Director & Above": [168000, 216000, 300000],
+  },
+  "Admin & Support": {
+    "Junior / Entry Level": [24000, 30000, 36000],
+    "Executive": [30000, 38000, 48000],
+    "Senior Executive": [38000, 48000, 60000],
+    "Manager": [54000, 66000, 84000],
+    "Senior Manager": [72000, 90000, 114000],
+    "Director & Above": [102000, 132000, 174000],
+  },
+};
+
+const TIPS = {
+  "Finance & Accounting": [
+    "CFA or FRM certification typically adds 15-20% to base compensation in Singapore's finance sector.",
+    "Build expertise in ESG reporting and IFRS updates - these are high-demand specialisations among Big Four and MNCs.",
+    "Transition into FP&A or treasury roles, which command a premium over general accounting positions.",
+  ],
+  "Marketing & Communications": [
+    "Digital analytics certifications (Google Analytics, Meta Blueprint) are increasingly valued by Singapore employers.",
+    "Develop integrated campaign management skills across SEA markets to unlock regional role premiums.",
+    "Build a portfolio of measurable ROI outcomes - data-driven marketers command 10-15% higher packages.",
+  ],
+  "IT & Technology": [
+    "Cloud certifications (AWS Solutions Architect, Azure, GCP) can lift your package by 15-25% in the Singapore market.",
+    "Specialise in AI/ML engineering or cybersecurity - both command significant premiums over general SWE roles.",
+    "Contribute to open-source projects and build a visible GitHub profile to strengthen your negotiating position.",
+  ],
+  "Operations & Logistics": [
+    "Supply chain analytics and automation skills (SAP, Oracle SCM) are in high demand across Singapore's logistics hub.",
+    "Pursue APICS CSCP or CLTD certification to demonstrate strategic supply chain competency.",
+    "Gain cross-border operations experience - ASEAN regional logistics expertise commands a premium.",
+  ],
+  "Human Resources": [
+    "Upskill in people analytics and HRIS platforms (Workday, SAP SuccessFactors) to move into strategic HR roles.",
+    "IHRP certification (IHRP-CP or IHRP-SP) is increasingly expected for senior HR roles in Singapore.",
+    "Specialise in compensation & benefits or organisational development for higher-paying HR tracks.",
+  ],
+  "Sales & Business Development": [
+    "Develop expertise in enterprise SaaS or fintech sales - these verticals offer the strongest commission structures in SG.",
+    "Build a track record of exceeding quota with documented metrics to negotiate higher OTE packages.",
+    "Regional account management experience across SEA markets is a key differentiator for senior BD roles.",
+  ],
+  "Engineering": [
+    "Professional Engineer (PE) registration with PEB Singapore unlocks senior technical and project leadership roles.",
+    "Specialise in sustainability engineering or smart building systems - both are growth areas tied to Singapore's Green Plan.",
+    "Pursue PMP or Prince2 to transition into engineering management, which typically adds 20-30% over individual contributor roles.",
+  ],
+  "Admin & Support": [
+    "Advanced proficiency in business intelligence tools (Power BI, Tableau) can transition you into higher-paying analyst roles.",
+    "Pursue a WSQ Diploma in Business Administration to formalise your skills and qualify for executive positions.",
+    "Develop project coordination and stakeholder management skills to move into operations or PMO support roles.",
+  ],
+};
+
+const FIELDS = Object.keys(SALARY_DATA);
+const RANKS = [
+  "Junior / Entry Level",
+  "Executive",
+  "Senior Executive",
+  "Manager",
+  "Senior Manager",
+  "Director & Above",
+];
+
+const fmt = (n) =>
+  "$" + n.toLocaleString("en-SG", { maximumFractionDigits: 0 });
+
+const rankLabel = (rank) => {
+  if (rank === "Junior / Entry Level") return "Junior";
+  if (rank === "Director & Above") return "Director";
+  return rank;
+};
+
+function SalaryBenchmarker() {
+  const [salary, setSalary] = useState("");
+  const [field, setField] = useState("");
+  const [rank, setRank] = useState("");
+  const [result, setResult] = useState(null);
+  const [animating, setAnimating] = useState(false);
+  const resultRef = useRef(null);
+
+  const canSubmit = salary && field && rank && Number(salary) > 0;
+
+  const handleBenchmark = () => {
+    if (!canSubmit) return;
+    const s = Number(salary);
+    const [p25, p50, p75] = SALARY_DATA[field][rank];
+    let zone, zoneLabel, zoneColor;
+    if (s < p25) {
+      zone = "below";
+      zoneLabel = "below the 25th percentile";
+      zoneColor = "#ef4444";
+    } else if (s < p50) {
+      zone = "low";
+      zoneLabel = "between the 25th percentile and the median";
+      zoneColor = "#f59e0b";
+    } else if (s < p75) {
+      zone = "mid";
+      zoneLabel = "above the median";
+      zoneColor = "#10b981";
+    } else {
+      zone = "top";
+      zoneLabel = "in the top quartile";
+      zoneColor = "#7c3aed";
+    }
+
+    const fieldShort = field.split(" & ")[0];
+    const rankShort = rankLabel(rank);
+    const verdict = `You're ${zoneLabel} for ${fieldShort} ${rankShort}s in Singapore.`;
+
+    setResult({ salary: s, p25, p50, p75, zone, zoneColor, verdict, field, rank });
+    setAnimating(true);
+    setTimeout(() => {
+      setAnimating(false);
+      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
+  const rangeMin = result ? result.p25 * 0.7 : 0;
+  const rangeMax = result ? result.p75 * 1.2 : 1;
+  const pct = (v) => ((v - rangeMin) / (rangeMax - rangeMin)) * 100;
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(165deg, #f0fdfa 0%, #f8fafc 40%, #f1f5f9 100%)",
+      fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
+      color: "#1e293b",
+      padding: "0 0 40px 0",
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Space+Mono:wght@400;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes growWidth { from { width: 0%; } }
+        @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(13,148,136,0.2); } 50% { box-shadow: 0 0 0 8px rgba(13,148,136,0); } }
+        .fade-up { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .fade-up-1 { animation-delay: 0.05s; opacity: 0; }
+        .fade-up-2 { animation-delay: 0.15s; opacity: 0; }
+        .fade-up-3 { animation-delay: 0.25s; opacity: 0; }
+        .fade-up-4 { animation-delay: 0.35s; opacity: 0; }
+        .grow-bar { animation: growWidth 0.8s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(13,148,136,0.3); }
+        .btn-primary:active:not(:disabled) { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+        .card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+      `}</style>
+
+      {/* Header */}
+      <div style={{
+        background: "linear-gradient(135deg, #0d9488 0%, #0f766e 60%, #115e59 100%)",
+        padding: "48px 24px 40px",
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        <div style={{
+          position: "absolute", top: -60, right: -60, width: 200, height: 200,
+          borderRadius: "50%", background: "rgba(255,255,255,0.05)",
+        }} />
+        <div style={{
+          position: "absolute", bottom: -40, left: -30, width: 140, height: 140,
+          borderRadius: "50%", background: "rgba(255,255,255,0.04)",
+        }} />
+        <div style={{ position: "relative", zIndex: 1, maxWidth: 600, margin: "0 auto" }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            background: "rgba(255,255,255,0.12)", borderRadius: 20,
+            padding: "6px 16px", marginBottom: 16, fontSize: 12,
+            color: "rgba(255,255,255,0.85)", letterSpacing: "0.05em",
+            fontWeight: 500, textTransform: "uppercase",
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#5eead4" }} />
+            Singapore 2025
+          </div>
+          <h1 style={{
+            fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
+            fontSize: "clamp(26px, 5vw, 36px)", color: "#fff",
+            lineHeight: 1.2, marginBottom: 8,
+          }}>
+            Salary Benchmarker
+          </h1>
+          <p style={{
+            color: "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 400, lineHeight: 1.5,
+          }}>
+            See where your compensation stands against the Singapore market.
+          </p>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div style={{ maxWidth: 580, margin: "0 auto", padding: "0 20px" }}>
+        {/* Input Card */}
+        <div className="card" style={{
+          background: "#fff", borderRadius: 16,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+          padding: "32px 28px", marginTop: -24,
+          position: "relative", zIndex: 2,
+          transition: "box-shadow 0.3s ease",
+        }}>
+          {/* Salary Input */}
+          <div style={{ marginBottom: 22 }}>
+            <label style={{
+              display: "block", fontSize: 13, fontWeight: 600, color: "#475569",
+              marginBottom: 8, letterSpacing: "0.01em",
+            }}>
+              Annual Salary (SGD)
+            </label>
+            <div style={{ position: "relative" }}>
+              <span style={{
+                position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)",
+                color: "#94a3b8", fontWeight: 600, fontSize: 15, fontFamily: "'Space Mono', monospace",
+              }}>S$</span>
+              <input
+                type="number"
+                value={salary}
+                onChange={(e) => setSalary(e.target.value)}
+                placeholder="e.g. 72000"
+                style={{
+                  width: "100%", padding: "14px 16px 14px 50px",
+                  border: "1.5px solid #e2e8f0", borderRadius: 10,
+                  fontSize: 16, fontFamily: "'Space Mono', monospace",
+                  fontWeight: 500, color: "#1e293b",
+                  outline: "none", transition: "border 0.2s",
+                  background: "#f8fafc",
+                }}
+                onFocus={(e) => (e.target.style.borderColor = "#0d9488")}
+                onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+              />
+            </div>
+          </div>
+
+          {/* Field Select */}
+          <div style={{ marginBottom: 22 }}>
+            <label style={{
+              display: "block", fontSize: 13, fontWeight: 600, color: "#475569",
+              marginBottom: 8,
+            }}>Field</label>
+            <div style={{ position: "relative" }}>
+              <select
+                value={field}
+                onChange={(e) => setField(e.target.value)}
+                style={{
+                  width: "100%", padding: "14px 40px 14px 16px",
+                  border: "1.5px solid #e2e8f0", borderRadius: 10,
+                  fontSize: 15, fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: 500, color: field ? "#1e293b" : "#94a3b8",
+                  outline: "none", transition: "border 0.2s",
+                  background: "#f8fafc", cursor: "pointer",
+                }}
+                onFocus={(e) => (e.target.style.borderColor = "#0d9488")}
+                onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+              >
+                <option value="" disabled>Select your field</option>
+                {FIELDS.map((f) => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+              </select>
+              <span style={{
+                position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)",
+                pointerEvents: "none", color: "#94a3b8", fontSize: 12,
+              }}>&#x25BC;</span>
+            </div>
+          </div>
+
+          {/* Rank Select */}
+          <div style={{ marginBottom: 28 }}>
+            <label style={{
+              display: "block", fontSize: 13, fontWeight: 600, color: "#475569",
+              marginBottom: 8,
+            }}>Rank</label>
+            <div style={{ position: "relative" }}>
+              <select
+                value={rank}
+                onChange={(e) => setRank(e.target.value)}
+                style={{
+                  width: "100%", padding: "14px 40px 14px 16px",
+                  border: "1.5px solid #e2e8f0", borderRadius: 10,
+                  fontSize: 15, fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: 500, color: rank ? "#1e293b" : "#94a3b8",
+                  outline: "none", transition: "border 0.2s",
+                  background: "#f8fafc", cursor: "pointer",
+                }}
+                onFocus={(e) => (e.target.style.borderColor = "#0d9488")}
+                onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+              >
+                <option value="" disabled>Select your rank</option>
+                {RANKS.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+              <span style={{
+                position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)",
+                pointerEvents: "none", color: "#94a3b8", fontSize: 12,
+              }}>&#x25BC;</span>
+            </div>
+          </div>
+
+          {/* CTA Button */}
+          <button
+            className="btn-primary"
+            disabled={!canSubmit}
+            onClick={handleBenchmark}
+            style={{
+              width: "100%", padding: "15px 24px",
+              background: canSubmit
+                ? "linear-gradient(135deg, #0d9488 0%, #0f766e 100%)"
+                : "#cbd5e1",
+              color: "#fff", border: "none", borderRadius: 10,
+              fontSize: 16, fontWeight: 600, cursor: canSubmit ? "pointer" : "not-allowed",
+              transition: "all 0.2s ease",
+              fontFamily: "'DM Sans', sans-serif",
+              letterSpacing: "0.01em",
+            }}
+          >
+            See My Benchmark
+          </button>
+        </div>
+
+        {/* Results */}
+        {result && (
+          <div ref={resultRef} style={{ marginTop: 24 }}>
+            {/* Verdict */}
+            <div className="card fade-up fade-up-1" style={{
+              background: "#fff", borderRadius: 16,
+              boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+              padding: "24px 28px", marginBottom: 16,
+              borderLeft: `4px solid ${result.zoneColor}`,
+              transition: "box-shadow 0.3s ease",
+            }}>
+              <p style={{
+                fontSize: 16, fontWeight: 600, color: "#1e293b", lineHeight: 1.5,
+              }}>
+                <span style={{
+                  display: "inline-block", width: 10, height: 10,
+                  borderRadius: "50%", background: result.zoneColor,
+                  marginRight: 10, verticalAlign: "middle",
+                }} />
+                {result.verdict}
+              </p>
+            </div>
+
+            {/* Range Visualisation */}
+            <div className="card fade-up fade-up-2" style={{
+              background: "#fff", borderRadius: 16,
+              boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+              padding: "28px 28px 24px", marginBottom: 16,
+              transition: "box-shadow 0.3s ease",
+            }}>
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 20 }}>
+                Market Range
+              </h3>
+
+              {/* Range Bar */}
+              <div style={{ position: "relative", marginBottom: 36, padding: "0 4px" }}>
+                {/* Track */}
+                <div style={{
+                  height: 14, borderRadius: 7, background: "#f1f5f9",
+                  position: "relative", overflow: "hidden",
+                }}>
+                  {/* Red zone: 0 to p25 */}
+                  <div style={{
+                    position: "absolute", left: 0, top: 0, bottom: 0,
+                    width: `${pct(result.p25)}%`,
+                    background: "linear-gradient(90deg, #fecaca, #fca5a5)",
+                    borderRadius: "7px 0 0 7px",
+                  }} />
+                  {/* Amber zone: p25 to p50 */}
+                  <div style={{
+                    position: "absolute", left: `${pct(result.p25)}%`, top: 0, bottom: 0,
+                    width: `${pct(result.p50) - pct(result.p25)}%`,
+                    background: "linear-gradient(90deg, #fde68a, #fcd34d)",
+                  }} />
+                  {/* Green zone: p50 to p75 */}
+                  <div style={{
+                    position: "absolute", left: `${pct(result.p50)}%`, top: 0, bottom: 0,
+                    width: `${pct(result.p75) - pct(result.p50)}%`,
+                    background: "linear-gradient(90deg, #6ee7b7, #34d399)",
+                  }} />
+                  {/* Purple zone: p75+ */}
+                  <div style={{
+                    position: "absolute", left: `${pct(result.p75)}%`, top: 0, bottom: 0,
+                    right: 0,
+                    background: "linear-gradient(90deg, #c4b5fd, #a78bfa)",
+                    borderRadius: "0 7px 7px 0",
+                  }} />
+                </div>
+
+                {/* Percentile markers */}
+                {[
+                  { val: result.p25, label: "P25", sub: fmt(result.p25) },
+                  { val: result.p50, label: "Median", sub: fmt(result.p50) },
+                  { val: result.p75, label: "P75", sub: fmt(result.p75) },
+                ].map((m, i) => (
+                  <div key={i} style={{
+                    position: "absolute", left: `${pct(m.val)}%`,
+                    top: 18, transform: "translateX(-50%)",
+                    textAlign: "center",
+                  }}>
+                    <div style={{
+                      width: 1, height: 8, background: "#94a3b8", margin: "0 auto 4px",
+                    }} />
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "#64748b", whiteSpace: "nowrap" }}>
+                      {m.label}
+                    </div>
+                    <div style={{
+                      fontSize: 11, fontWeight: 700, color: "#334155",
+                      fontFamily: "'Space Mono', monospace", whiteSpace: "nowrap",
+                    }}>
+                      {m.sub}
+                    </div>
+                  </div>
+                ))}
+
+                {/* User marker */}
+                {(() => {
+                  const clampedPct = Math.max(0, Math.min(100, pct(result.salary)));
+                  return (
+                    <div style={{
+                      position: "absolute",
+                      left: `${clampedPct}%`,
+                      top: -8,
+                      transform: "translateX(-50%)",
+                      display: "flex", flexDirection: "column", alignItems: "center",
+                      zIndex: 5,
+                    }}>
+                      <div style={{
+                        background: result.zoneColor, color: "#fff",
+                        padding: "3px 10px", borderRadius: 6,
+                        fontSize: 11, fontWeight: 700,
+                        fontFamily: "'Space Mono', monospace",
+                        whiteSpace: "nowrap",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                      }}>
+                        You: {fmt(result.salary)}
+                      </div>
+                      <div style={{
+                        width: 0, height: 0,
+                        borderLeft: "5px solid transparent",
+                        borderRight: "5px solid transparent",
+                        borderTop: `6px solid ${result.zoneColor}`,
+                      }} />
+                      <div style={{
+                        width: 3, height: 22, background: result.zoneColor,
+                        borderRadius: 2,
+                      }} />
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Legend */}
+              <div style={{
+                display: "flex", flexWrap: "wrap", gap: "8px 16px",
+                justifyContent: "center", marginTop: 8,
+              }}>
+                {[
+                  { c: "#fca5a5", l: "Below P25" },
+                  { c: "#fcd34d", l: "P25 - Median" },
+                  { c: "#34d399", l: "Median - P75" },
+                  { c: "#a78bfa", l: "Above P75" },
+                ].map((item, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: 3, background: item.c }} />
+                    <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>{item.l}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Comparison Bars */}
+            <div className="card fade-up fade-up-3" style={{
+              background: "#fff", borderRadius: 16,
+              boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+              padding: "28px 28px 24px", marginBottom: 16,
+              transition: "box-shadow 0.3s ease",
+            }}>
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 20 }}>
+                How You Compare
+              </h3>
+
+              {[
+                { label: "You", value: result.salary, color: result.zoneColor },
+                { label: "Market Median", value: result.p50, color: "#0d9488" },
+                { label: "Top Quartile (P75)", value: result.p75, color: "#7c3aed" },
+              ].map((bar, i) => {
+                const maxVal = Math.max(result.salary, result.p75) * 1.15;
+                const w = (bar.value / maxVal) * 100;
+                return (
+                  <div key={i} style={{ marginBottom: i < 2 ? 16 : 0 }}>
+                    <div style={{
+                      display: "flex", justifyContent: "space-between",
+                      alignItems: "baseline", marginBottom: 6,
+                    }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>
+                        {bar.label}
+                      </span>
+                      <span style={{
+                        fontSize: 14, fontWeight: 700, color: bar.color,
+                        fontFamily: "'Space Mono', monospace",
+                      }}>
+                        {fmt(bar.value)}
+                      </span>
+                    </div>
+                    <div style={{
+                      height: 10, borderRadius: 5, background: "#f1f5f9",
+                      overflow: "hidden",
+                    }}>
+                      <div
+                        className="grow-bar"
+                        style={{
+                          height: "100%", borderRadius: 5,
+                          width: `${w}%`,
+                          background: i === 0
+                            ? `linear-gradient(90deg, ${bar.color}cc, ${bar.color})`
+                            : `linear-gradient(90deg, ${bar.color}55, ${bar.color}99)`,
+                          animationDelay: `${i * 0.15}s`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Tips */}
+            <div className="card fade-up fade-up-4" style={{
+              background: "#fff", borderRadius: 16,
+              boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+              padding: "28px 28px 24px",
+              transition: "box-shadow 0.3s ease",
+            }}>
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 16 }}>
+                <span style={{ marginRight: 8 }}>&#x1F4A1;</span>
+                How to reach the next band
+              </h3>
+              {TIPS[result.field].map((tip, i) => (
+                <div key={i} style={{
+                  display: "flex", gap: 12, alignItems: "flex-start",
+                  marginBottom: i < TIPS[result.field].length - 1 ? 14 : 0,
+                  padding: "12px 14px",
+                  background: "#f0fdfa",
+                  borderRadius: 10,
+                  borderLeft: "3px solid #99f6e4",
+                }}>
+                  <span style={{
+                    fontSize: 13, fontWeight: 700, color: "#0d9488",
+                    minWidth: 20, textAlign: "center",
+                    fontFamily: "'Space Mono', monospace",
+                  }}>
+                    {i + 1}
+                  </span>
+                  <p style={{ fontSize: 14, color: "#334155", lineHeight: 1.55, fontWeight: 400 }}>
+                    {tip}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Disclaimer */}
+        <p style={{
+          textAlign: "center", fontSize: 11, color: "#94a3b8",
+          marginTop: 32, lineHeight: 1.6, padding: "0 12px",
+        }}>
+          Illustrative benchmarks based on publicly available Singapore salary data (MOM, Robert Half, Hays). Not a substitute for professional career advice.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<SalaryBenchmarker />);
+</script>
+</body>
+</html>
