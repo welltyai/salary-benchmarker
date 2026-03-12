@@ -3,651 +3,630 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Salary Benchmarker — Singapore 2025</title>
-  <meta name="description" content="See where your compensation stands against the Singapore market." />
+  <title>SalaryScope – Singapore Market Benchmarks</title>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #020617; }
+  </style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
-const { useState, useRef } = React;
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useEffect, useRef } = React;
+const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } = Recharts;
 
+// ─── Singapore Salary Data (Annual, SGD) ───────────────────────────
+// Realistic synthetic data based on SG market benchmarks
 const SALARY_DATA = {
-  "Finance & Accounting": {
-    "Junior / Entry Level": [36000, 42000, 52000],
-    "Executive": [42000, 54000, 66000],
-    "Senior Executive": [54000, 72000, 90000],
-    "Manager": [78000, 96000, 120000],
-    "Senior Manager": [108000, 132000, 168000],
-    "Director & Above": [156000, 204000, 276000],
+  Technology: {
+    Intern:           { p25: 12000, p50: 15600, p75: 19200, p90: 24000 },
+    Junior:           { p25: 42000, p50: 54000, p75: 66000, p90: 78000 },
+    "Mid-Level":      { p25: 66000, p50: 84000, p75: 102000, p90: 120000 },
+    Senior:           { p25: 96000, p50: 120000, p75: 150000, p90: 180000 },
+    "Lead / Staff":   { p25: 132000, p50: 168000, p75: 204000, p90: 252000 },
+    Manager:          { p25: 144000, p50: 180000, p75: 228000, p90: 276000 },
+    "Senior Manager": { p25: 180000, p50: 228000, p75: 288000, p90: 348000 },
+    Director:         { p25: 240000, p50: 312000, p75: 396000, p90: 480000 },
+    "VP / C-Suite":   { p25: 360000, p50: 480000, p75: 600000, p90: 780000 },
   },
-  "Marketing & Communications": {
-    "Junior / Entry Level": [33000, 39000, 48000],
-    "Executive": [40000, 51000, 63000],
-    "Senior Executive": [51000, 66000, 84000],
-    "Manager": [72000, 90000, 114000],
-    "Senior Manager": [102000, 126000, 156000],
-    "Director & Above": [144000, 192000, 264000],
+  Finance: {
+    Intern:           { p25: 12000, p50: 18000, p75: 24000, p90: 30000 },
+    Junior:           { p25: 48000, p50: 60000, p75: 72000, p90: 84000 },
+    "Mid-Level":      { p25: 72000, p50: 96000, p75: 120000, p90: 144000 },
+    Senior:           { p25: 108000, p50: 138000, p75: 174000, p90: 210000 },
+    "Lead / Staff":   { p25: 144000, p50: 180000, p75: 228000, p90: 276000 },
+    Manager:          { p25: 156000, p50: 204000, p75: 252000, p90: 312000 },
+    "Senior Manager": { p25: 204000, p50: 264000, p75: 336000, p90: 408000 },
+    Director:         { p25: 288000, p50: 372000, p75: 468000, p90: 564000 },
+    "VP / C-Suite":   { p25: 420000, p50: 564000, p75: 720000, p90: 960000 },
   },
-  "IT & Technology": {
-    "Junior / Entry Level": [42000, 51000, 63000],
-    "Executive": [54000, 66000, 84000],
-    "Senior Executive": [72000, 90000, 114000],
-    "Manager": [96000, 120000, 156000],
-    "Senior Manager": [132000, 162000, 204000],
-    "Director & Above": [180000, 228000, 312000],
+  Healthcare: {
+    Intern:           { p25: 10800, p50: 14400, p75: 18000, p90: 21600 },
+    Junior:           { p25: 36000, p50: 45600, p75: 54000, p90: 64800 },
+    "Mid-Level":      { p25: 54000, p50: 72000, p75: 90000, p90: 108000 },
+    Senior:           { p25: 84000, p50: 108000, p75: 132000, p90: 162000 },
+    "Lead / Staff":   { p25: 108000, p50: 138000, p75: 168000, p90: 204000 },
+    Manager:          { p25: 120000, p50: 156000, p75: 192000, p90: 240000 },
+    "Senior Manager": { p25: 156000, p50: 204000, p75: 252000, p90: 312000 },
+    Director:         { p25: 216000, p50: 276000, p75: 348000, p90: 432000 },
+    "VP / C-Suite":   { p25: 312000, p50: 420000, p75: 540000, p90: 696000 },
   },
-  "Operations & Logistics": {
-    "Junior / Entry Level": [30000, 36000, 45000],
-    "Executive": [38000, 48000, 60000],
-    "Senior Executive": [48000, 63000, 78000],
-    "Manager": [72000, 90000, 108000],
-    "Senior Manager": [96000, 120000, 150000],
-    "Director & Above": [138000, 180000, 240000],
+  Manufacturing: {
+    Intern:           { p25: 10800, p50: 13200, p75: 16800, p90: 19200 },
+    Junior:           { p25: 33600, p50: 42000, p75: 51600, p90: 60000 },
+    "Mid-Level":      { p25: 51600, p50: 66000, p75: 81600, p90: 96000 },
+    Senior:           { p25: 78000, p50: 96000, p75: 120000, p90: 144000 },
+    "Lead / Staff":   { p25: 96000, p50: 126000, p75: 156000, p90: 192000 },
+    Manager:          { p25: 108000, p50: 144000, p75: 180000, p90: 216000 },
+    "Senior Manager": { p25: 144000, p50: 186000, p75: 234000, p90: 288000 },
+    Director:         { p25: 204000, p50: 264000, p75: 336000, p90: 408000 },
+    "VP / C-Suite":   { p25: 300000, p50: 396000, p75: 504000, p90: 648000 },
   },
-  "Human Resources": {
-    "Junior / Entry Level": [33000, 39000, 48000],
-    "Executive": [40000, 51000, 63000],
-    "Senior Executive": [51000, 66000, 84000],
-    "Manager": [72000, 90000, 114000],
-    "Senior Manager": [102000, 126000, 156000],
-    "Director & Above": [144000, 192000, 264000],
+  Government: {
+    Intern:           { p25: 10800, p50: 13200, p75: 15600, p90: 18000 },
+    Junior:           { p25: 36000, p50: 44400, p75: 52800, p90: 60000 },
+    "Mid-Level":      { p25: 54000, p50: 69600, p75: 84000, p90: 96000 },
+    Senior:           { p25: 78000, p50: 96000, p75: 114000, p90: 132000 },
+    "Lead / Staff":   { p25: 96000, p50: 120000, p75: 144000, p90: 168000 },
+    Manager:          { p25: 114000, p50: 144000, p75: 174000, p90: 204000 },
+    "Senior Manager": { p25: 144000, p50: 186000, p75: 228000, p90: 276000 },
+    Director:         { p25: 204000, p50: 264000, p75: 324000, p90: 396000 },
+    "VP / C-Suite":   { p25: 312000, p50: 396000, p75: 492000, p90: 600000 },
   },
-  "Sales & Business Development": {
-    "Junior / Entry Level": [36000, 42000, 54000],
-    "Executive": [45000, 57000, 72000],
-    "Senior Executive": [60000, 78000, 96000],
-    "Manager": [84000, 108000, 138000],
-    "Senior Manager": [114000, 144000, 180000],
-    "Director & Above": [162000, 216000, 288000],
-  },
-  "Engineering": {
-    "Junior / Entry Level": [39000, 48000, 60000],
-    "Executive": [51000, 63000, 78000],
-    "Senior Executive": [66000, 84000, 108000],
-    "Manager": [90000, 114000, 144000],
-    "Senior Manager": [126000, 156000, 198000],
-    "Director & Above": [168000, 216000, 300000],
-  },
-  "Admin & Support": {
-    "Junior / Entry Level": [24000, 30000, 36000],
-    "Executive": [30000, 38000, 48000],
-    "Senior Executive": [38000, 48000, 60000],
-    "Manager": [54000, 66000, 84000],
-    "Senior Manager": [72000, 90000, 114000],
-    "Director & Above": [102000, 132000, 174000],
+  Education: {
+    Intern:           { p25: 9600, p50: 12000, p75: 14400, p90: 16800 },
+    Junior:           { p25: 30000, p50: 39600, p75: 48000, p90: 55200 },
+    "Mid-Level":      { p25: 48000, p50: 62400, p75: 76800, p90: 90000 },
+    Senior:           { p25: 72000, p50: 90000, p75: 108000, p90: 126000 },
+    "Lead / Staff":   { p25: 90000, p50: 114000, p75: 138000, p90: 162000 },
+    Manager:          { p25: 102000, p50: 132000, p75: 162000, p90: 192000 },
+    "Senior Manager": { p25: 132000, p50: 168000, p75: 210000, p90: 252000 },
+    Director:         { p25: 180000, p50: 234000, p75: 300000, p90: 372000 },
+    "VP / C-Suite":   { p25: 264000, p50: 348000, p75: 444000, p90: 552000 },
   },
 };
 
-const TIPS = {
-  "Finance & Accounting": [
-    "CFA or FRM certification typically adds 15-20% to base compensation in Singapore's finance sector.",
-    "Build expertise in ESG reporting and IFRS updates - these are high-demand specialisations among Big Four and MNCs.",
-    "Transition into FP&A or treasury roles, which command a premium over general accounting positions.",
-  ],
-  "Marketing & Communications": [
-    "Digital analytics certifications (Google Analytics, Meta Blueprint) are increasingly valued by Singapore employers.",
-    "Develop integrated campaign management skills across SEA markets to unlock regional role premiums.",
-    "Build a portfolio of measurable ROI outcomes - data-driven marketers command 10-15% higher packages.",
-  ],
-  "IT & Technology": [
-    "Cloud certifications (AWS Solutions Architect, Azure, GCP) can lift your package by 15-25% in the Singapore market.",
-    "Specialise in AI/ML engineering or cybersecurity - both command significant premiums over general SWE roles.",
-    "Contribute to open-source projects and build a visible GitHub profile to strengthen your negotiating position.",
-  ],
-  "Operations & Logistics": [
-    "Supply chain analytics and automation skills (SAP, Oracle SCM) are in high demand across Singapore's logistics hub.",
-    "Pursue APICS CSCP or CLTD certification to demonstrate strategic supply chain competency.",
-    "Gain cross-border operations experience - ASEAN regional logistics expertise commands a premium.",
-  ],
-  "Human Resources": [
-    "Upskill in people analytics and HRIS platforms (Workday, SAP SuccessFactors) to move into strategic HR roles.",
-    "IHRP certification (IHRP-CP or IHRP-SP) is increasingly expected for senior HR roles in Singapore.",
-    "Specialise in compensation & benefits or organisational development for higher-paying HR tracks.",
-  ],
-  "Sales & Business Development": [
-    "Develop expertise in enterprise SaaS or fintech sales - these verticals offer the strongest commission structures in SG.",
-    "Build a track record of exceeding quota with documented metrics to negotiate higher OTE packages.",
-    "Regional account management experience across SEA markets is a key differentiator for senior BD roles.",
-  ],
-  "Engineering": [
-    "Professional Engineer (PE) registration with PEB Singapore unlocks senior technical and project leadership roles.",
-    "Specialise in sustainability engineering or smart building systems - both are growth areas tied to Singapore's Green Plan.",
-    "Pursue PMP or Prince2 to transition into engineering management, which typically adds 20-30% over individual contributor roles.",
-  ],
-  "Admin & Support": [
-    "Advanced proficiency in business intelligence tools (Power BI, Tableau) can transition you into higher-paying analyst roles.",
-    "Pursue a WSQ Diploma in Business Administration to formalise your skills and qualify for executive positions.",
-    "Develop project coordination and stakeholder management skills to move into operations or PMO support roles.",
-  ],
+const INDUSTRIES = Object.keys(SALARY_DATA);
+const RANKS = ["Intern", "Junior", "Mid-Level", "Senior", "Lead / Staff", "Manager", "Senior Manager", "Director", "VP / C-Suite"];
+
+const INDUSTRY_ICONS = {
+  Technology: "01",
+  Finance: "02",
+  Healthcare: "03",
+  Manufacturing: "04",
+  Government: "05",
+  Education: "06",
 };
 
-const FIELDS = Object.keys(SALARY_DATA);
-const RANKS = [
-  "Junior / Entry Level",
-  "Executive",
-  "Senior Executive",
-  "Manager",
-  "Senior Manager",
-  "Director & Above",
-];
+const fmt = (v) => `$${(v / 1000).toFixed(0)}K`;
+const fmtFull = (v) => `SGD ${v.toLocaleString()}`;
 
-const fmt = (n) =>
-  "$" + n.toLocaleString("en-SG", { maximumFractionDigits: 0 });
+// ─── Gauge Component (SVG arc) ──────────────────────────────────────
+function GaugeChart({ data, userSalary }) {
+  const min = data.p25 * 0.7;
+  const max = data.p90 * 1.15;
+  const clampedSalary = Math.max(min, Math.min(max, userSalary || data.p50));
+  const pct = ((clampedSalary - min) / (max - min)) * 100;
 
-const rankLabel = (rank) => {
-  if (rank === "Junior / Entry Level") return "Junior";
-  if (rank === "Director & Above") return "Director";
-  return rank;
-};
-
-function SalaryBenchmarker() {
-  const [salary, setSalary] = useState("");
-  const [field, setField] = useState("");
-  const [rank, setRank] = useState("");
-  const [result, setResult] = useState(null);
-  const [animating, setAnimating] = useState(false);
-  const resultRef = useRef(null);
-
-  const canSubmit = salary && field && rank && Number(salary) > 0;
-
-  const handleBenchmark = () => {
-    if (!canSubmit) return;
-    const s = Number(salary);
-    const [p25, p50, p75] = SALARY_DATA[field][rank];
-    let zone, zoneLabel, zoneColor;
-    if (s < p25) {
-      zone = "below";
-      zoneLabel = "below the 25th percentile";
-      zoneColor = "#ef4444";
-    } else if (s < p50) {
-      zone = "low";
-      zoneLabel = "between the 25th percentile and the median";
-      zoneColor = "#f59e0b";
-    } else if (s < p75) {
-      zone = "mid";
-      zoneLabel = "above the median";
-      zoneColor = "#10b981";
-    } else {
-      zone = "top";
-      zoneLabel = "in the top quartile";
-      zoneColor = "#7c3aed";
-    }
-
-    const fieldShort = field.split(" & ")[0];
-    const rankShort = rankLabel(rank);
-    const verdict = `You're ${zoneLabel} for ${fieldShort} ${rankShort}s in Singapore.`;
-
-    setResult({ salary: s, p25, p50, p75, zone, zoneColor, verdict, field, rank });
-    setAnimating(true);
-    setTimeout(() => {
-      setAnimating(false);
-      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
+  const getPercentileLabel = () => {
+    if (!userSalary) return null;
+    if (userSalary < data.p25) return { label: "Below 25th", color: "#f87171" };
+    if (userSalary < data.p50) return { label: "25th-50th", color: "#fb923c" };
+    if (userSalary < data.p75) return { label: "50th-75th", color: "#a3e635" };
+    if (userSalary < data.p90) return { label: "75th-90th", color: "#34d399" };
+    return { label: "Above 90th", color: "#22d3ee" };
   };
 
-  const rangeMin = result ? result.p25 * 0.7 : 0;
-  const rangeMax = result ? result.p75 * 1.2 : 1;
-  const pct = (v) => ((v - rangeMin) / (rangeMax - rangeMin)) * 100;
+  const percentile = getPercentileLabel();
+
+  // Arc math
+  const cx = 160, cy = 140, r = 110;
+  const startAngle = Math.PI;
+  const endAngle = 0;
+
+  const arcPath = (startPct, endPct, radius) => {
+    const a1 = startAngle + (endAngle - startAngle) * (startPct / 100);
+    const a2 = startAngle + (endAngle - startAngle) * (endPct / 100);
+    const x1 = cx + radius * Math.cos(a1);
+    const y1 = cy - radius * Math.sin(a1);
+    const x2 = cx + radius * Math.cos(a2);
+    const y2 = cy - radius * Math.sin(a2);
+    const large = a2 - a1 > Math.PI ? 1 : 0;
+    return `M ${x1} ${y1} A ${radius} ${radius} 0 ${large} 0 ${x2} ${y2}`;
+  };
+
+  const needleAngle = startAngle + (endAngle - startAngle) * (pct / 100);
+  const needleLen = 85;
+  const nx = cx + needleLen * Math.cos(needleAngle);
+  const ny = cy - needleLen * Math.sin(needleAngle);
+
+  const zones = [
+    { from: 0, to: ((data.p25 - min) / (max - min)) * 100, color: "#f87171" },
+    { from: ((data.p25 - min) / (max - min)) * 100, to: ((data.p50 - min) / (max - min)) * 100, color: "#fb923c" },
+    { from: ((data.p50 - min) / (max - min)) * 100, to: ((data.p75 - min) / (max - min)) * 100, color: "#a3e635" },
+    { from: ((data.p75 - min) / (max - min)) * 100, to: ((data.p90 - min) / (max - min)) * 100, color: "#34d399" },
+    { from: ((data.p90 - min) / (max - min)) * 100, to: 100, color: "#22d3ee" },
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+      <svg width="320" height="180" viewBox="0 0 320 180">
+        {/* Background arc */}
+        <path d={arcPath(0, 100, r)} fill="none" stroke="#1e293b" strokeWidth="28" strokeLinecap="round" />
+        {/* Zone arcs */}
+        {zones.map((z, i) => (
+          <path key={i} d={arcPath(z.from, z.to, r)} fill="none" stroke={z.color} strokeWidth="24" opacity="0.35" />
+        ))}
+        {/* Active arc up to needle */}
+        {userSalary && (
+          <path d={arcPath(0, pct, r)} fill="none" stroke={percentile?.color || "#a3e635"} strokeWidth="24" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 8px ${percentile?.color}55)` }} />
+        )}
+        {/* Needle */}
+        <line x1={cx} y1={cy} x2={nx} y2={ny} stroke="#f8fafc" strokeWidth="3" strokeLinecap="round" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))", transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)" }} />
+        <circle cx={cx} cy={cy} r="8" fill="#0f172a" stroke="#f8fafc" strokeWidth="3" />
+        {/* Center value */}
+        <text x={cx} y={cy + 36} textAnchor="middle" fill="#f8fafc" fontSize="18" fontWeight="700" fontFamily="'JetBrains Mono', monospace">
+          {userSalary ? fmtFull(userSalary) : fmtFull(data.p50)}
+        </text>
+        <text x={cx} y={cy + 54} textAnchor="middle" fill="#94a3b8" fontSize="11" fontFamily="'JetBrains Mono', monospace">
+          {userSalary ? "Your Salary" : "Median (P50)"}
+        </text>
+        {/* Min / Max labels */}
+        <text x="30" y={cy + 10} fill="#64748b" fontSize="10" fontFamily="'JetBrains Mono', monospace">{fmt(min)}</text>
+        <text x="264" y={cy + 10} fill="#64748b" fontSize="10" fontFamily="'JetBrains Mono', monospace">{fmt(max)}</text>
+      </svg>
+      {percentile && userSalary && (
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: "6px",
+          padding: "6px 16px", borderRadius: "20px",
+          background: `${percentile.color}18`, border: `1px solid ${percentile.color}40`,
+        }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: percentile.color }} />
+          <span style={{ color: percentile.color, fontSize: "13px", fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>
+            {percentile.label} Percentile
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Percentile Bar Chart ────────────────────────────────────────
+function PercentileChart({ data, userSalary }) {
+  const chartData = [
+    { name: "25th", value: data.p25, fill: "#f87171" },
+    { name: "50th", value: data.p50, fill: "#fb923c" },
+    { name: "75th", value: data.p75, fill: "#a3e635" },
+    { name: "90th", value: data.p90, fill: "#34d399" },
+  ];
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload?.length) {
+      return (
+        <div style={{
+          background: "#0f172a", border: "1px solid #334155", borderRadius: "8px",
+          padding: "10px 14px", fontFamily: "'JetBrains Mono', monospace",
+        }}>
+          <p style={{ color: "#94a3b8", fontSize: "11px", margin: 0 }}>{payload[0].payload.name} Percentile</p>
+          <p style={{ color: "#f8fafc", fontSize: "15px", fontWeight: 700, margin: "4px 0 0" }}>{fmtFull(payload[0].value)}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div style={{ width: "100%", height: 220 }}>
+      <ResponsiveContainer>
+        <BarChart data={chartData} barCategoryGap="25%" margin={{ top: 20, right: 10, bottom: 5, left: 10 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+          <XAxis
+            dataKey="name" tick={{ fill: "#94a3b8", fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}
+            axisLine={{ stroke: "#334155" }} tickLine={false}
+          />
+          <YAxis
+            tick={{ fill: "#64748b", fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}
+            axisLine={false} tickLine={false} tickFormatter={fmt} width={55}
+          />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff08" }} />
+          {userSalary && (
+            <ReferenceLine
+              y={userSalary} stroke="#f8fafc" strokeDasharray="6 4" strokeWidth={2}
+              label={{ value: `You: ${fmt(userSalary)}`, position: "insideTopRight", fill: "#f8fafc", fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}
+            />
+          )}
+          <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={56}>
+            {chartData.map((entry, i) => (
+              <Cell key={i} fill={entry.fill} fillOpacity={0.75} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ─── Pill Selector ───────────────────────────────────────────────
+function PillSelector({ options, value, onChange, columns = 3 }) {
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: `repeat(${columns}, 1fr)`,
+      gap: "8px",
+    }}>
+      {options.map((opt) => {
+        const active = opt === value;
+        return (
+          <button
+            key={opt}
+            onClick={() => onChange(opt)}
+            style={{
+              padding: "10px 8px",
+              borderRadius: "10px",
+              border: active ? "1.5px solid #a3e635" : "1.5px solid #1e293b",
+              background: active ? "#a3e63512" : "#0f172a",
+              color: active ? "#a3e635" : "#94a3b8",
+              fontSize: "13px",
+              fontWeight: active ? 600 : 400,
+              fontFamily: "'JetBrains Mono', monospace",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              textAlign: "center",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {opt}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Insight Cards ───────────────────────────────────────────────
+function InsightCards({ data, industry, rank, userSalary }) {
+  const midpoint = (data.p25 + data.p75) / 2;
+  const spread = data.p90 - data.p25;
+  const spreadPct = ((spread / data.p50) * 100).toFixed(0);
+
+  const cards = [
+    {
+      label: "Median Salary",
+      value: fmtFull(data.p50),
+      sub: `${industry} / ${rank}`,
+      accent: "#fb923c",
+    },
+    {
+      label: "Salary Range",
+      value: `${fmt(data.p25)} - ${fmt(data.p90)}`,
+      sub: `${spreadPct}% spread (P25 to P90)`,
+      accent: "#a3e635",
+    },
+    {
+      label: "Sweet Spot",
+      value: fmtFull(midpoint),
+      sub: "Midpoint between P25 and P75",
+      accent: "#22d3ee",
+    },
+  ];
+
+  if (userSalary) {
+    const diff = userSalary - data.p50;
+    const diffPct = ((diff / data.p50) * 100).toFixed(1);
+    const above = diff >= 0;
+    cards.push({
+      label: "vs. Median",
+      value: `${above ? "+" : ""}${diffPct}%`,
+      sub: `${above ? "Above" : "Below"} market median by ${fmtFull(Math.abs(diff))}`,
+      accent: above ? "#34d399" : "#f87171",
+    });
+  }
+
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: userSalary ? "repeat(4, 1fr)" : "repeat(3, 1fr)",
+      gap: "12px",
+    }}>
+      {cards.map((c, i) => (
+        <div key={i} style={{
+          background: "#0f172a",
+          border: "1px solid #1e293b",
+          borderRadius: "12px",
+          padding: "16px",
+          borderTop: `3px solid ${c.accent}`,
+        }}>
+          <div style={{ color: "#64748b", fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            {c.label}
+          </div>
+          <div style={{ color: "#f8fafc", fontSize: "18px", fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", margin: "6px 0 4px" }}>
+            {c.value}
+          </div>
+          <div style={{ color: "#64748b", fontSize: "11px", fontFamily: "'JetBrains Mono', monospace" }}>
+            {c.sub}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Main App ────────────────────────────────────────────────────
+function SalaryBenchmark() {
+  const [industry, setIndustry] = useState(null);
+  const [rank, setRank] = useState(null);
+  const [userSalary, setUserSalary] = useState("");
+  const [salaryNum, setSalaryNum] = useState(null);
+  const [showResults, setShowResults] = useState(false);
+  const [fadeIn, setFadeIn] = useState(false);
+
+  const data = industry && rank ? SALARY_DATA[industry]?.[rank] : null;
+
+  const handleBenchmark = () => {
+    if (!industry || !rank) return;
+    const parsed = parseInt(userSalary.replace(/[^0-9]/g, ""), 10);
+    setSalaryNum(parsed || null);
+    setShowResults(false);
+    setFadeIn(false);
+    setTimeout(() => {
+      setShowResults(true);
+      requestAnimationFrame(() => setFadeIn(true));
+    }, 100);
+  };
+
+  const handleSalaryInput = (e) => {
+    const raw = e.target.value.replace(/[^0-9]/g, "");
+    if (raw === "") {
+      setUserSalary("");
+      return;
+    }
+    setUserSalary(parseInt(raw, 10).toLocaleString());
+  };
 
   return (
     <div style={{
       minHeight: "100vh",
-      background: "linear-gradient(165deg, #f0fdfa 0%, #f8fafc 40%, #f1f5f9 100%)",
-      fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
-      color: "#1e293b",
-      padding: "0 0 40px 0",
+      background: "#020617",
+      color: "#f8fafc",
+      fontFamily: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
+      overflow: "hidden",
     }}>
+      {/* Fonts */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Space+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes growWidth { from { width: 0%; } }
-        @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(13,148,136,0.2); } 50% { box-shadow: 0 0 0 8px rgba(13,148,136,0); } }
-        .fade-up { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
-        .fade-up-1 { animation-delay: 0.05s; opacity: 0; }
-        .fade-up-2 { animation-delay: 0.15s; opacity: 0; }
-        .fade-up-3 { animation-delay: 0.25s; opacity: 0; }
-        .fade-up-4 { animation-delay: 0.35s; opacity: 0; }
-        .grow-bar { animation: growWidth 0.8s cubic-bezier(0.22,1,0.36,1) forwards; }
-        .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(13,148,136,0.3); }
-        .btn-primary:active:not(:disabled) { transform: translateY(0); }
-        .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
-        .card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        input::placeholder { color: #475569; }
       `}</style>
 
       {/* Header */}
       <div style={{
-        background: "linear-gradient(135deg, #0d9488 0%, #0f766e 60%, #115e59 100%)",
-        padding: "48px 24px 40px",
-        textAlign: "center",
-        position: "relative",
-        overflow: "hidden",
+        borderBottom: "1px solid #1e293b",
+        padding: "24px 32px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
       }}>
-        <div style={{
-          position: "absolute", top: -60, right: -60, width: 200, height: 200,
-          borderRadius: "50%", background: "rgba(255,255,255,0.05)",
-        }} />
-        <div style={{
-          position: "absolute", bottom: -40, left: -30, width: 140, height: 140,
-          borderRadius: "50%", background: "rgba(255,255,255,0.04)",
-        }} />
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 600, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "rgba(255,255,255,0.12)", borderRadius: 20,
-            padding: "6px 16px", marginBottom: 16, fontSize: 12,
-            color: "rgba(255,255,255,0.85)", letterSpacing: "0.05em",
-            fontWeight: 500, textTransform: "uppercase",
+            width: 40, height: 40, borderRadius: "10px",
+            background: "linear-gradient(135deg, #a3e635, #22d3ee)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "18px", fontWeight: 700, color: "#020617",
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#5eead4" }} />
-            Singapore 2025
+            S
           </div>
-          <h1 style={{
-            fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
-            fontSize: "clamp(26px, 5vw, 36px)", color: "#fff",
-            lineHeight: 1.2, marginBottom: 8,
-          }}>
-            Salary Benchmarker
-          </h1>
-          <p style={{
-            color: "rgba(255,255,255,0.7)", fontSize: 15, fontWeight: 400, lineHeight: 1.5,
-          }}>
-            See where your compensation stands against the Singapore market.
-          </p>
+          <div>
+            <div style={{ fontSize: "17px", fontWeight: 700, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.02em" }}>
+              SalaryScope
+            </div>
+            <div style={{ fontSize: "11px", color: "#64748b", marginTop: "1px" }}>
+              Singapore Market Benchmarks
+            </div>
+          </div>
+        </div>
+        <div style={{
+          fontSize: "10px", color: "#475569", padding: "4px 12px",
+          border: "1px solid #1e293b", borderRadius: "20px",
+          fontFamily: "'JetBrains Mono', monospace",
+        }}>
+          Synthetic Data / v0.1
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{ maxWidth: 580, margin: "0 auto", padding: "0 20px" }}>
-        {/* Input Card */}
-        <div className="card" style={{
-          background: "#fff", borderRadius: 16,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-          padding: "32px 28px", marginTop: -24,
-          position: "relative", zIndex: 2,
-          transition: "box-shadow 0.3s ease",
+      {/* Content */}
+      <div style={{ maxWidth: 880, margin: "0 auto", padding: "32px 24px" }}>
+
+        {/* Step 1: Industry */}
+        <div style={{ marginBottom: "28px", animation: "slideUp 0.4s ease" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+            <div style={{
+              width: 24, height: 24, borderRadius: "6px",
+              background: industry ? "#a3e635" : "#1e293b",
+              color: industry ? "#020617" : "#64748b",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "12px", fontWeight: 700, transition: "all 0.3s ease",
+            }}>1</div>
+            <span style={{ fontSize: "14px", fontWeight: 600, color: "#e2e8f0", fontFamily: "'Space Grotesk', sans-serif" }}>
+              Select Industry
+            </span>
+          </div>
+          <PillSelector options={INDUSTRIES} value={industry} onChange={setIndustry} columns={3} />
+        </div>
+
+        {/* Step 2: Rank */}
+        <div style={{ marginBottom: "28px", animation: "slideUp 0.5s ease", opacity: industry ? 1 : 0.35, pointerEvents: industry ? "auto" : "none", transition: "opacity 0.3s ease" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+            <div style={{
+              width: 24, height: 24, borderRadius: "6px",
+              background: rank ? "#a3e635" : "#1e293b",
+              color: rank ? "#020617" : "#64748b",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "12px", fontWeight: 700, transition: "all 0.3s ease",
+            }}>2</div>
+            <span style={{ fontSize: "14px", fontWeight: 600, color: "#e2e8f0", fontFamily: "'Space Grotesk', sans-serif" }}>
+              Select Rank
+            </span>
+          </div>
+          <PillSelector options={RANKS} value={rank} onChange={setRank} columns={3} />
+        </div>
+
+        {/* Step 3: Optional salary input */}
+        <div style={{
+          marginBottom: "28px", animation: "slideUp 0.6s ease",
+          opacity: industry && rank ? 1 : 0.35,
+          pointerEvents: industry && rank ? "auto" : "none",
+          transition: "opacity 0.3s ease",
         }}>
-          {/* Salary Input */}
-          <div style={{ marginBottom: 22 }}>
-            <label style={{
-              display: "block", fontSize: 13, fontWeight: 600, color: "#475569",
-              marginBottom: 8, letterSpacing: "0.01em",
-            }}>
-              Annual Salary (SGD)
-            </label>
-            <div style={{ position: "relative" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+            <div style={{
+              width: 24, height: 24, borderRadius: "6px",
+              background: "#1e293b", color: "#64748b",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "12px", fontWeight: 700,
+            }}>3</div>
+            <span style={{ fontSize: "14px", fontWeight: 600, color: "#e2e8f0", fontFamily: "'Space Grotesk', sans-serif" }}>
+              Your Annual Salary
+            </span>
+            <span style={{ fontSize: "11px", color: "#475569", fontStyle: "italic" }}>(optional)</span>
+          </div>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <div style={{ position: "relative", flex: 1 }}>
               <span style={{
-                position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)",
-                color: "#94a3b8", fontWeight: 600, fontSize: 15, fontFamily: "'Space Mono', monospace",
-              }}>S$</span>
+                position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)",
+                color: "#64748b", fontSize: "14px", fontWeight: 600,
+              }}>SGD</span>
               <input
-                type="number"
-                value={salary}
-                onChange={(e) => setSalary(e.target.value)}
-                placeholder="e.g. 72000"
+                type="text"
+                value={userSalary}
+                onChange={handleSalaryInput}
+                placeholder="e.g. 84,000"
                 style={{
-                  width: "100%", padding: "14px 16px 14px 50px",
-                  border: "1.5px solid #e2e8f0", borderRadius: 10,
-                  fontSize: 16, fontFamily: "'Space Mono', monospace",
-                  fontWeight: 500, color: "#1e293b",
-                  outline: "none", transition: "border 0.2s",
-                  background: "#f8fafc",
+                  width: "100%",
+                  padding: "12px 14px 12px 56px",
+                  borderRadius: "10px",
+                  border: "1.5px solid #1e293b",
+                  background: "#0f172a",
+                  color: "#f8fafc",
+                  fontSize: "15px",
+                  fontWeight: 600,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  outline: "none",
+                  transition: "border-color 0.2s ease",
                 }}
-                onFocus={(e) => (e.target.style.borderColor = "#0d9488")}
-                onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+                onFocus={(e) => e.target.style.borderColor = "#a3e635"}
+                onBlur={(e) => e.target.style.borderColor = "#1e293b"}
               />
             </div>
+            <button
+              onClick={handleBenchmark}
+              disabled={!industry || !rank}
+              style={{
+                padding: "12px 28px",
+                borderRadius: "10px",
+                border: "none",
+                background: industry && rank ? "linear-gradient(135deg, #a3e635, #22d3ee)" : "#1e293b",
+                color: industry && rank ? "#020617" : "#475569",
+                fontSize: "14px",
+                fontWeight: 700,
+                fontFamily: "'Space Grotesk', sans-serif",
+                cursor: industry && rank ? "pointer" : "not-allowed",
+                transition: "all 0.2s ease",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Benchmark
+            </button>
           </div>
-
-          {/* Field Select */}
-          <div style={{ marginBottom: 22 }}>
-            <label style={{
-              display: "block", fontSize: 13, fontWeight: 600, color: "#475569",
-              marginBottom: 8,
-            }}>Field</label>
-            <div style={{ position: "relative" }}>
-              <select
-                value={field}
-                onChange={(e) => setField(e.target.value)}
-                style={{
-                  width: "100%", padding: "14px 40px 14px 16px",
-                  border: "1.5px solid #e2e8f0", borderRadius: 10,
-                  fontSize: 15, fontFamily: "'DM Sans', sans-serif",
-                  fontWeight: 500, color: field ? "#1e293b" : "#94a3b8",
-                  outline: "none", transition: "border 0.2s",
-                  background: "#f8fafc", cursor: "pointer",
-                }}
-                onFocus={(e) => (e.target.style.borderColor = "#0d9488")}
-                onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
-              >
-                <option value="" disabled>Select your field</option>
-                {FIELDS.map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
-              <span style={{
-                position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)",
-                pointerEvents: "none", color: "#94a3b8", fontSize: 12,
-              }}>&#x25BC;</span>
-            </div>
-          </div>
-
-          {/* Rank Select */}
-          <div style={{ marginBottom: 28 }}>
-            <label style={{
-              display: "block", fontSize: 13, fontWeight: 600, color: "#475569",
-              marginBottom: 8,
-            }}>Rank</label>
-            <div style={{ position: "relative" }}>
-              <select
-                value={rank}
-                onChange={(e) => setRank(e.target.value)}
-                style={{
-                  width: "100%", padding: "14px 40px 14px 16px",
-                  border: "1.5px solid #e2e8f0", borderRadius: 10,
-                  fontSize: 15, fontFamily: "'DM Sans', sans-serif",
-                  fontWeight: 500, color: rank ? "#1e293b" : "#94a3b8",
-                  outline: "none", transition: "border 0.2s",
-                  background: "#f8fafc", cursor: "pointer",
-                }}
-                onFocus={(e) => (e.target.style.borderColor = "#0d9488")}
-                onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
-              >
-                <option value="" disabled>Select your rank</option>
-                {RANKS.map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-              <span style={{
-                position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)",
-                pointerEvents: "none", color: "#94a3b8", fontSize: 12,
-              }}>&#x25BC;</span>
-            </div>
-          </div>
-
-          {/* CTA Button */}
-          <button
-            className="btn-primary"
-            disabled={!canSubmit}
-            onClick={handleBenchmark}
-            style={{
-              width: "100%", padding: "15px 24px",
-              background: canSubmit
-                ? "linear-gradient(135deg, #0d9488 0%, #0f766e 100%)"
-                : "#cbd5e1",
-              color: "#fff", border: "none", borderRadius: 10,
-              fontSize: 16, fontWeight: 600, cursor: canSubmit ? "pointer" : "not-allowed",
-              transition: "all 0.2s ease",
-              fontFamily: "'DM Sans', sans-serif",
-              letterSpacing: "0.01em",
-            }}
-          >
-            See My Benchmark
-          </button>
         </div>
 
         {/* Results */}
-        {result && (
-          <div ref={resultRef} style={{ marginTop: 24 }}>
-            {/* Verdict */}
-            <div className="card fade-up fade-up-1" style={{
-              background: "#fff", borderRadius: 16,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-              padding: "24px 28px", marginBottom: 16,
-              borderLeft: `4px solid ${result.zoneColor}`,
-              transition: "box-shadow 0.3s ease",
+        {showResults && data && (
+          <div style={{
+            opacity: fadeIn ? 1 : 0,
+            transform: fadeIn ? "translateY(0)" : "translateY(20px)",
+            transition: "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}>
+            {/* Divider */}
+            <div style={{
+              height: "1px",
+              background: "linear-gradient(90deg, transparent, #334155, transparent)",
+              margin: "8px 0 28px",
+            }} />
+
+            {/* Insight Cards */}
+            <InsightCards data={data} industry={industry} rank={rank} userSalary={salaryNum} />
+
+            {/* Charts row */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "16px",
+              marginTop: "20px",
             }}>
-              <p style={{
-                fontSize: 16, fontWeight: 600, color: "#1e293b", lineHeight: 1.5,
-              }}>
-                <span style={{
-                  display: "inline-block", width: 10, height: 10,
-                  borderRadius: "50%", background: result.zoneColor,
-                  marginRight: 10, verticalAlign: "middle",
-                }} />
-                {result.verdict}
-              </p>
-            </div>
-
-            {/* Range Visualisation */}
-            <div className="card fade-up fade-up-2" style={{
-              background: "#fff", borderRadius: 16,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-              padding: "28px 28px 24px", marginBottom: 16,
-              transition: "box-shadow 0.3s ease",
-            }}>
-              <h3 style={{ fontSize: 13, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 20 }}>
-                Market Range
-              </h3>
-
-              {/* Range Bar */}
-              <div style={{ position: "relative", marginBottom: 36, padding: "0 4px" }}>
-                {/* Track */}
-                <div style={{
-                  height: 14, borderRadius: 7, background: "#f1f5f9",
-                  position: "relative", overflow: "hidden",
-                }}>
-                  {/* Red zone: 0 to p25 */}
-                  <div style={{
-                    position: "absolute", left: 0, top: 0, bottom: 0,
-                    width: `${pct(result.p25)}%`,
-                    background: "linear-gradient(90deg, #fecaca, #fca5a5)",
-                    borderRadius: "7px 0 0 7px",
-                  }} />
-                  {/* Amber zone: p25 to p50 */}
-                  <div style={{
-                    position: "absolute", left: `${pct(result.p25)}%`, top: 0, bottom: 0,
-                    width: `${pct(result.p50) - pct(result.p25)}%`,
-                    background: "linear-gradient(90deg, #fde68a, #fcd34d)",
-                  }} />
-                  {/* Green zone: p50 to p75 */}
-                  <div style={{
-                    position: "absolute", left: `${pct(result.p50)}%`, top: 0, bottom: 0,
-                    width: `${pct(result.p75) - pct(result.p50)}%`,
-                    background: "linear-gradient(90deg, #6ee7b7, #34d399)",
-                  }} />
-                  {/* Purple zone: p75+ */}
-                  <div style={{
-                    position: "absolute", left: `${pct(result.p75)}%`, top: 0, bottom: 0,
-                    right: 0,
-                    background: "linear-gradient(90deg, #c4b5fd, #a78bfa)",
-                    borderRadius: "0 7px 7px 0",
-                  }} />
-                </div>
-
-                {/* Percentile markers */}
-                {[
-                  { val: result.p25, label: "P25", sub: fmt(result.p25) },
-                  { val: result.p50, label: "Median", sub: fmt(result.p50) },
-                  { val: result.p75, label: "P75", sub: fmt(result.p75) },
-                ].map((m, i) => (
-                  <div key={i} style={{
-                    position: "absolute", left: `${pct(m.val)}%`,
-                    top: 18, transform: "translateX(-50%)",
-                    textAlign: "center",
-                  }}>
-                    <div style={{
-                      width: 1, height: 8, background: "#94a3b8", margin: "0 auto 4px",
-                    }} />
-                    <div style={{ fontSize: 10, fontWeight: 600, color: "#64748b", whiteSpace: "nowrap" }}>
-                      {m.label}
-                    </div>
-                    <div style={{
-                      fontSize: 11, fontWeight: 700, color: "#334155",
-                      fontFamily: "'Space Mono', monospace", whiteSpace: "nowrap",
-                    }}>
-                      {m.sub}
-                    </div>
-                  </div>
-                ))}
-
-                {/* User marker */}
-                {(() => {
-                  const clampedPct = Math.max(0, Math.min(100, pct(result.salary)));
-                  return (
-                    <div style={{
-                      position: "absolute",
-                      left: `${clampedPct}%`,
-                      top: -8,
-                      transform: "translateX(-50%)",
-                      display: "flex", flexDirection: "column", alignItems: "center",
-                      zIndex: 5,
-                    }}>
-                      <div style={{
-                        background: result.zoneColor, color: "#fff",
-                        padding: "3px 10px", borderRadius: 6,
-                        fontSize: 11, fontWeight: 700,
-                        fontFamily: "'Space Mono', monospace",
-                        whiteSpace: "nowrap",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                      }}>
-                        You: {fmt(result.salary)}
-                      </div>
-                      <div style={{
-                        width: 0, height: 0,
-                        borderLeft: "5px solid transparent",
-                        borderRight: "5px solid transparent",
-                        borderTop: `6px solid ${result.zoneColor}`,
-                      }} />
-                      <div style={{
-                        width: 3, height: 22, background: result.zoneColor,
-                        borderRadius: 2,
-                      }} />
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* Legend */}
+              {/* Gauge */}
               <div style={{
-                display: "flex", flexWrap: "wrap", gap: "8px 16px",
-                justifyContent: "center", marginTop: 8,
+                background: "#0f172a",
+                border: "1px solid #1e293b",
+                borderRadius: "14px",
+                padding: "20px",
               }}>
-                {[
-                  { c: "#fca5a5", l: "Below P25" },
-                  { c: "#fcd34d", l: "P25 - Median" },
-                  { c: "#34d399", l: "Median - P75" },
-                  { c: "#a78bfa", l: "Above P75" },
-                ].map((item, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <div style={{ width: 10, height: 10, borderRadius: 3, background: item.c }} />
-                    <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>{item.l}</span>
-                  </div>
-                ))}
+                <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Salary Gauge
+                </div>
+                <GaugeChart data={data} userSalary={salaryNum} />
+              </div>
+
+              {/* Bar Chart */}
+              <div style={{
+                background: "#0f172a",
+                border: "1px solid #1e293b",
+                borderRadius: "14px",
+                padding: "20px",
+              }}>
+                <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Percentile Distribution
+                </div>
+                <PercentileChart data={data} userSalary={salaryNum} />
               </div>
             </div>
 
-            {/* Comparison Bars */}
-            <div className="card fade-up fade-up-3" style={{
-              background: "#fff", borderRadius: 16,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-              padding: "28px 28px 24px", marginBottom: 16,
-              transition: "box-shadow 0.3s ease",
+            {/* Footer note */}
+            <div style={{
+              marginTop: "20px",
+              padding: "14px 18px",
+              borderRadius: "10px",
+              background: "#0f172a",
+              border: "1px solid #1e293b",
+              fontSize: "11px",
+              color: "#475569",
+              lineHeight: 1.6,
+              fontFamily: "'JetBrains Mono', monospace",
             }}>
-              <h3 style={{ fontSize: 13, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 20 }}>
-                How You Compare
-              </h3>
-
-              {[
-                { label: "You", value: result.salary, color: result.zoneColor },
-                { label: "Market Median", value: result.p50, color: "#0d9488" },
-                { label: "Top Quartile (P75)", value: result.p75, color: "#7c3aed" },
-              ].map((bar, i) => {
-                const maxVal = Math.max(result.salary, result.p75) * 1.15;
-                const w = (bar.value / maxVal) * 100;
-                return (
-                  <div key={i} style={{ marginBottom: i < 2 ? 16 : 0 }}>
-                    <div style={{
-                      display: "flex", justifyContent: "space-between",
-                      alignItems: "baseline", marginBottom: 6,
-                    }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                        {bar.label}
-                      </span>
-                      <span style={{
-                        fontSize: 14, fontWeight: 700, color: bar.color,
-                        fontFamily: "'Space Mono', monospace",
-                      }}>
-                        {fmt(bar.value)}
-                      </span>
-                    </div>
-                    <div style={{
-                      height: 10, borderRadius: 5, background: "#f1f5f9",
-                      overflow: "hidden",
-                    }}>
-                      <div
-                        className="grow-bar"
-                        style={{
-                          height: "100%", borderRadius: 5,
-                          width: `${w}%`,
-                          background: i === 0
-                            ? `linear-gradient(90deg, ${bar.color}cc, ${bar.color})`
-                            : `linear-gradient(90deg, ${bar.color}55, ${bar.color}99)`,
-                          animationDelay: `${i * 0.15}s`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Tips */}
-            <div className="card fade-up fade-up-4" style={{
-              background: "#fff", borderRadius: 16,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-              padding: "28px 28px 24px",
-              transition: "box-shadow 0.3s ease",
-            }}>
-              <h3 style={{ fontSize: 13, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 16 }}>
-                <span style={{ marginRight: 8 }}>&#x1F4A1;</span>
-                How to reach the next band
-              </h3>
-              {TIPS[result.field].map((tip, i) => (
-                <div key={i} style={{
-                  display: "flex", gap: 12, alignItems: "flex-start",
-                  marginBottom: i < TIPS[result.field].length - 1 ? 14 : 0,
-                  padding: "12px 14px",
-                  background: "#f0fdfa",
-                  borderRadius: 10,
-                  borderLeft: "3px solid #99f6e4",
-                }}>
-                  <span style={{
-                    fontSize: 13, fontWeight: 700, color: "#0d9488",
-                    minWidth: 20, textAlign: "center",
-                    fontFamily: "'Space Mono', monospace",
-                  }}>
-                    {i + 1}
-                  </span>
-                  <p style={{ fontSize: 14, color: "#334155", lineHeight: 1.55, fontWeight: 400 }}>
-                    {tip}
-                  </p>
-                </div>
-              ))}
+              Disclaimer: All figures are synthetic estimates based on publicly available Singapore salary surveys and market research.
+              This tool is for informational purposes only and should not be used as the sole basis for compensation decisions.
+              Actual salaries vary by company, experience, qualifications, and negotiation.
             </div>
           </div>
         )}
-
-        {/* Disclaimer */}
-        <p style={{
-          textAlign: "center", fontSize: 11, color: "#94a3b8",
-          marginTop: 32, lineHeight: 1.6, padding: "0 12px",
-        }}>
-          Illustrative benchmarks based on publicly available Singapore salary data (MOM, Robert Half, Hays). Not a substitute for professional career advice.
-        </p>
       </div>
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<SalaryBenchmarker />);
-</script>
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<SalaryBenchmark />);
+  </script>
 </body>
 </html>
